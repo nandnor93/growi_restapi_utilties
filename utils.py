@@ -7,15 +7,22 @@ from typing import Union
 
 # Growi Rest API向けのError
 class GrowiAPIError(Exception):
-    def __init__(self, description):
+    def __init__(self, description, status_code=None):
         super().__init__()
         self.description = description
+        self.status_code = status_code
     
     def __repr__(self):
-        return str(self.description)
+        if self.status_code is not None:
+            return f'({self.description}, {self.status_code})'
+        else:
+            return str(self.description)
 
     def __str__(self):
-        return str(self.description)
+        if self.status_code is not None:
+            return f'({self.description}, {self.status_code})'
+        else:
+            return str(self.description)
 
 
 ##### Get Information #####
@@ -25,12 +32,19 @@ def exist_page(base_url: str, api_token: str, page_path: str) -> bool:
     """
     [Experiment] check existance of the spcified page
     """
-    res = get_page_info(base_url, api_token, page_path)
+    try:
+        res = get_page_info(base_url, api_token, page_path)
+        return res.get("page") is not None
+    except GrowiAPIError as e:
+        if e.status_code == 404:
+            return False
+        else:
+            raise e
 
-    if res.status_code == 200:
-        return json.loads(res.text)['ok']
-    else:
-        raise GrowiAPIError(res.text)
+    # if res.status_code == 200:
+    #     return json.loads(res.text)['ok']
+    # else:
+    #     raise GrowiAPIError(res.text)
 
 
 def get_page_info(base_url: str, api_token: str, page_path: str) -> dict:
@@ -40,11 +54,11 @@ def get_page_info(base_url: str, api_token: str, page_path: str) -> dict:
     req_url = '{}{}'.format(base_url, '/_api/v3/page')
     params={'access_token': f'{api_token}', 'path': page_path}
     res = requests.get(req_url, params=params)
-    print(res.status_code)
+
     if res.status_code == 200:
         return json.loads(res.text)
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 def get_page_list_by_page(base_url: str, api_token: str, page_path: str, limit:Union[int, None]=None) -> dict:
@@ -62,7 +76,7 @@ def get_page_list_by_page(base_url: str, api_token: str, page_path: str, limit:U
     if res.status_code == 200:
         return json.loads(res.text)['pages']
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 def get_page_list_by_user(base_url: str, api_token: str, user: str, limit:Union[int, None]=None) -> dict:
@@ -80,7 +94,7 @@ def get_page_list_by_user(base_url: str, api_token: str, user: str, limit:Union[
     if res.status_code == 200:
         return json.loads(res.text)['pages']
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 ##### Create Page #####
@@ -104,7 +118,7 @@ def create_page(base_url: str, api_token: str, page_path: str, body: str, grant:
     if res.status_code == 201:
         return json.loads(res.text)
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 def update_page(base_url: str, api_token: str, page_path: str, body: str, grant: int=1) -> dict:
@@ -134,7 +148,7 @@ def update_page(base_url: str, api_token: str, page_path: str, body: str, grant:
     if res.status_code == 200:
         return json.loads(res.text)
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 #### Delete Page #####
@@ -197,7 +211,7 @@ def rename_page(base_url: str, api_token: str, src_page_path: str, target_page_p
     if res.status_code == 200:
         return json.loads(res.text)
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 
 ##### Get Tag #####
@@ -215,7 +229,7 @@ def get_tag_list(base_url: str, api_token: str) -> dict:
     if res.status_code == 200:
         return json.loads(res.text)['data']
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
 
 def get_tags_by_page(base_url: str, api_token: str, page_path: str) -> list:
     """
@@ -235,4 +249,4 @@ def get_tags_by_page(base_url: str, api_token: str, page_path: str) -> list:
     if res.status_code == 200:
         return json.loads(res.text)['tags']
     else:
-        raise GrowiAPIError(res.text)
+        raise GrowiAPIError(res.text, res.status_code)
