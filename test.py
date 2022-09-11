@@ -1,6 +1,5 @@
-from email.mime import base
 import pprint
-from utils import *
+from pygrowi.utils import *
 
 if __name__ == '__main__':
     base_url = 'https://<wiki domain>'
