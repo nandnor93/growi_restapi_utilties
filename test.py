@@ -6,15 +6,21 @@ if __name__ == '__main__':
     api_token = 'API Token'
 
     body = '# Test\nThis page is created automatically.'
-    res = create_page(base_url, api_token, '/test/hase', body)
+    res = create_page(base_url, api_token, '/test/hoge', body)
     pprint.pprint(res)
 
-    body = '# Test\nThis page is created automatically.\nThis page is created automatically.\nThis page is created automatically.'
-    res = update_page(base_url, api_token, '/test/hase', body)
+    body = '# Test\nThis page is created automatically :tada:  \nThis page is created automatically.  \nThis page is created automatically.'
+    res = update_page(base_url, api_token, '/test/hoge', body)
     pprint.pprint(res)
 
-    res = rename_page(base_url, api_token, '/test/hase2', '/test/hase')
+    res = rename_page(base_url, api_token, '/test/hoge', '/test/hoge3')
     pprint.pprint(res)
 
-    res = get_page_info(base_url, api_token, '/test/hase')
+    res = get_tag_list(base_url, api_token)
+    pprint.pprint(res)
+
+    res = get_tags_by_page(base_url, api_token, "/test/hoge3")
+    pprint.pprint(res)
+
+    res = get_page_info(base_url, api_token, '/test/hoge3')
     pprint.pprint(res)

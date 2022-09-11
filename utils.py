@@ -37,10 +37,10 @@ def get_page_info(base_url: str, api_token: str, page_path: str) -> dict:
     """
     get page information
     """
-    req_url = '{}{}'.format(base_url, '/_api/pages.get')
+    req_url = '{}{}'.format(base_url, '/_api/v3/page')
     params={'access_token': f'{api_token}', 'path': page_path}
     res = requests.get(req_url, params=params)
-
+    print(res.status_code)
     if res.status_code == 200:
         return json.loads(res.text)
     else:
@@ -111,10 +111,8 @@ def update_page(base_url: str, api_token: str, page_path: str, body: str, grant:
     """
     update page
     """
-    res = get_page_info(base_url, api_token, page_path)
-    success = res['ok']
-    if not success:     # ページの存在しない場合get_page_infoはstatus_code=200で失敗する
-        raise GrowiAPIError(res)
+    res = get_page_info(base_url, api_token, page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+
     page_info = res['page']
     page_id = page_info['_id']
     revision_id = page_info['revision']['_id']
@@ -176,9 +174,7 @@ def rename_page(base_url: str, api_token: str, src_page_path: str, target_page_p
     rename page (change page path)
     """
     res = get_page_info(base_url, api_token, src_page_path)
-    success = res['ok']
-    if not success:     # ページの存在しない場合get_page_infoはstatus_code=200で失敗する
-        raise GrowiAPIError(res)
+    
     page_info = res['page']
     page_id = page_info['_id']
     revision_id = page_info['revision']['_id']
@@ -226,9 +222,7 @@ def get_tags_by_page(base_url: str, api_token: str, page_path: str) -> list:
     get tags annotated on specified pate
     """
     res = get_page_info(base_url, api_token, page_path)
-    success = res['ok']
-    if not success:     # ページの存在しない場合get_page_infoはstatus_code=200で失敗する
-        raise GrowiAPIError(res)
+    
     page_id = res['page']['_id']
 
     req_url = '{}{}'.format(base_url, '/_api/pages.getPageTag')
