@@ -10,7 +10,16 @@ if __name__ == '__main__':
     res = growi.create_page('/test/hoge', body)
     pprint.pprint(res)
 
-    body = '# Test\nThis page is created automatically :tada:  \nThis page is created automatically.  \nThis page is created automatically.'
+    res = growi.add_attachment_from_file('/test/hoge', "cameraman.png")
+    attach_path = res["attachment"]["filePathProxied"]
+    pprint.pprint(res)
+
+    # attach_file = ("cameraman.png", open("cameraman.png", "rb").read(), "image/png")
+    # res = growi.add_attachment('/test/hoge', attach_file)
+    # attach_path = res["attachment"]["filePathProxied"]
+    # pprint.pprint(res)
+
+    body = f'# Test\nThis page is created automatically :tada:  \nThis page is created automatically.\n\n![/test/hoge/cameraman.png]({attach_path})'
     res = growi.update_page('/test/hoge', body)
     pprint.pprint(res)
 

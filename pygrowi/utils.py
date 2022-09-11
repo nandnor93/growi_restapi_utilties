@@ -1,8 +1,10 @@
 # For Growi v4.2.10
 
 import json
+import pathlib
 import requests
-from typing import Dict, List, Union
+import mimetypes
+from typing import Dict, List, Optional, Tuple, Union
 
 
 # Growi Rest API向けのError
@@ -220,6 +222,64 @@ class GrowiAPI(object):
         else:
             raise GrowiAPIError(res.text, res.status_code)
 
+
+    ##### Attach files #####
+
+    def add_attachment(self, page_path: str, data: Tuple[str, bytes, str], attach_path: Optional[str] = None) -> dict:
+        """
+        Attach a file to a page.
+        `data` must be a tuple of (file name, file data, MIME type).
+        To use the attached file in a page, refer to `result['attachment']['filePathProxied']`.
+        """
+        
+        # APIリファレンスにある pathの効力がないように見える。また、["url"]返り値もない。
+
+        res = self.get_page_info(page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+
+        page_info = res['page']
+        page_id = page_info['_id']
+
+        req_url = '{}{}'.format(self.base_url, '/_api/attachments.add')
+        params = {
+            'access_token': f'{self.api_token}',
+        }
+
+        payloads = {
+            'page_id': str(page_id),
+        }
+        files = {
+            'file': data,
+        }
+        if attach_path is not None:
+            payloads['path'] = attach_path
+
+        res = requests.post(req_url, data=payloads, params=params, files=files)
+        if res.status_code == 200:
+            res_json = json.loads(res.text)
+            if res_json['ok']:
+                return res_json
+            else:
+                raise GrowiAPIError(f"Cannot attach the file ({res.text})", res.status_code)
+        else:
+            raise GrowiAPIError(res.text, res.status_code)
+
+    def add_attachment_from_file(self, page_path: str, file: Union[str, pathlib.Path], file_name: Optional[str] = None, attach_path: Optional[str] = None) -> dict:
+        """
+        Attach a file to a page.
+        file must be a file path or a pathlib.Path-like object.
+        To use the attached file in a page, refer to `result['attachment']['filePathProxied']`.
+        """
+
+        file = pathlib.Path(file)
+        if file_name is None:
+            file_name = file.name
+        file_data = (
+            file_name,
+            file.open('rb').read(),
+            mimetypes.guess_type(file)[0] or 'application/octet-stream'
+        )
+        return self.add_attachment(page_path, file_data, attach_path)
+    
 
     ##### Get Tag #####
 
