@@ -67,6 +67,20 @@ class GrowiAPI(object):
         else:
             raise GrowiAPIError(res.text, res.status_code)
 
+    def get_page_info_by_id(self, page_id: str) -> dict:
+        """
+        get page information
+        """
+        req_url = '{}{}'.format(self.base_url, '/_api/v3/page')
+        params={'access_token': f'{self.api_token}', 'pageId': page_id}
+        res = requests.get(req_url, params=params)
+
+        if res.status_code == 200:
+            return json.loads(res.text)
+        else:
+            raise GrowiAPIError(res.text, res.status_code)
+
+
 
     def get_page_list_by_page(self, page_path: str, limit:Union[int, None]=None) -> dict:
         """
@@ -130,11 +144,17 @@ class GrowiAPI(object):
             raise GrowiAPIError(res.text, res.status_code)
 
 
-    def update_page(self, page_path: str, body: str, grant: int=1) -> dict:
+    def update_page(self, page_path: str, body: str, grant: int=1, page_id: Optional[str] = None) -> dict:
         """
         update page
         """
-        res = self.get_page_info(page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        if not ((page_path is not None and page_id is None) or (page_path is None and page_id is not None)):
+            raise GrowiAPIError("Specify either page_path or page_id.")
+        if page_path is not None:
+            res = self.get_page_info(page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        else:
+            res = self.get_page_info_by_id(page_id)
 
         page_info = res['page']
         page_id = page_info['_id']
@@ -192,11 +212,17 @@ class GrowiAPI(object):
 
     ##### Rename Page #####
 
-    def rename_page(self, src_page_path: str, target_page_path: str, is_remain_meta_data: bool=True) -> dict:
+    def rename_page(self, src_page_path: str, target_page_path: str, is_remain_meta_data: bool=True, src_page_id: Optional[str] = None) -> dict:
         """
         rename page (change page path)
         """
-        res = self.get_page_info(src_page_path)
+
+        if not (src_page_path is not None and src_page_id is None) or (src_page_path is None and src_page_id is not None):
+            raise GrowiAPIError("Specify either src_page_path or src_page_id.")
+        if src_page_path is not None:
+            res = self.get_page_info(src_page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        else:
+            res = self.get_page_info_by_id(src_page_id)
         
         page_info = res['page']
         page_id = page_info['_id']
@@ -225,16 +251,22 @@ class GrowiAPI(object):
 
     ##### Attach files #####
 
-    def add_attachment(self, page_path: str, data: Tuple[str, bytes, str], attach_path: Optional[str] = None) -> dict:
+    def add_attachment(self, page_path: str, data: Tuple[str, bytes, str], attach_path: Optional[str] = None, page_id: Optional[str] = None) -> dict:
         """
         Attach a file to a page.
         `data` must be a tuple of (file name, file data, MIME type).
         To use the attached file in a page, refer to `result['attachment']['filePathProxied']`.
+        If using the page id, leave page_path None.
         """
         
         # APIリファレンスにある pathの効力がないように見える。また、["url"]返り値もない。
 
-        res = self.get_page_info(page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        if not ((page_path is not None and page_id is None) or (page_path is None and page_id is not None)):
+            raise GrowiAPIError("Specify either page_path or page_id.")
+        if page_path is not None:
+            res = self.get_page_info(page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        else:
+            res = self.get_page_info_by_id(page_id)
 
         page_info = res['page']
         page_id = page_info['_id']
@@ -263,7 +295,7 @@ class GrowiAPI(object):
         else:
             raise GrowiAPIError(res.text, res.status_code)
 
-    def add_attachment_from_file(self, page_path: str, file: Union[str, pathlib.Path], file_name: Optional[str] = None, attach_path: Optional[str] = None) -> dict:
+    def add_attachment_from_file(self, page_path: str, file: Union[str, pathlib.Path], file_name: Optional[str] = None, attach_path: Optional[str] = None, page_id: Optional[str] = None) -> dict:
         """
         Attach a file to a page.
         file must be a file path or a pathlib.Path-like object.
@@ -278,7 +310,7 @@ class GrowiAPI(object):
             file.open('rb').read(),
             mimetypes.guess_type(file)[0] or 'application/octet-stream'
         )
-        return self.add_attachment(page_path, file_data, attach_path)
+        return self.add_attachment(page_path, file_data, attach_path, page_id=page_id)
     
 
     ##### Get Tag #####
