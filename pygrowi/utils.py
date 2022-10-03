@@ -179,6 +179,33 @@ class GrowiAPI(object):
         else:
             raise GrowiAPIError(res.text, res.status_code)
 
+    def get_page(self, page_path: str, page_id: Optional[str] = None) -> dict:
+        """
+        update page
+        """
+
+        params = {
+            'access_token': f'{self.api_token}',
+        }
+
+        # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
+        if not ((page_path is not None and page_id is None) or (page_path is None and page_id is not None)):
+            raise GrowiAPIError("Specify either page_path or page_id.")
+        if page_path is not None:
+            params["path"] = page_path
+        else:
+            params["pageId"] = page_id
+
+        req_url = '{}{}'.format(self.base_url, '/_api/v3/page')
+
+        res = requests.get(req_url, params=params)
+        if res.status_code == 200:
+            # print(res.text)
+            return json.loads(res.text)
+        else:
+            raise GrowiAPIError(res.text, res.status_code)
+
+
 
     #### Delete Page #####
 
