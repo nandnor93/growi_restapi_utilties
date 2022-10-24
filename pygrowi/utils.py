@@ -4,7 +4,7 @@ import json
 import pathlib
 import requests
 import mimetypes
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 # Growi Rest API向けのError
@@ -144,7 +144,7 @@ class GrowiAPI(object):
             raise GrowiAPIError(res.text, res.status_code)
 
 
-    def update_page(self, page_path: str, body: str, grant: int=1, page_id: Optional[str] = None) -> dict:
+    def update_page(self, page_path: str, body: Union[str, Dict[str, Any]], grant: int=1, page_id: Optional[str] = None) -> dict:
         """
         update page
         """
@@ -172,6 +172,12 @@ class GrowiAPI(object):
             'revision_id': str(revision_id),
             'grant': grant,
         }
+        if isinstance(body, str):
+            payloads['body'] = body
+        elif isinstance(body, dict):
+            payloads.update(body)
+        else:
+            raise ValueError("body must be a str or dict[str, any]")
 
         res = requests.post(req_url, data=payloads, params=params)
         if res.status_code == 200:
