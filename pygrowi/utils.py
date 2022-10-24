@@ -245,12 +245,12 @@ class GrowiAPI(object):
 
     ##### Rename Page #####
 
-    def rename_page(self, src_page_path: str, target_page_path: str, is_remain_meta_data: bool=True, src_page_id: Optional[str] = None) -> dict:
+    def rename_page(self, src_page_path: str, target_page_path: str, src_page_id: Optional[str] = None, *, remain_meta_data: bool=True, recursively: bool=True, redirect: bool=True) -> dict:
         """
         rename page (change page path)
         """
 
-        if not (src_page_path is not None and src_page_id is None) or (src_page_path is None and src_page_id is not None):
+        if not ((src_page_path is not None and src_page_id is None) or (src_page_path is None and src_page_id is not None)):
             raise GrowiAPIError("Specify either src_page_path or src_page_id.")
         if src_page_path is not None:
             res = self.get_page_info(src_page_path) # ページの存在しない場合get_page_infoはstatus_code=404で失敗し、get_page_infoが例外を投げる
@@ -272,7 +272,9 @@ class GrowiAPI(object):
             'revisionId': revision_id,
             'path': src_page_path,
             'newPagePath': target_page_path,
-            'isRemainMetadata': 'true' if is_remain_meta_data else 'false',
+            'updateMetadata': 'true' if (not remain_meta_data) else 'false',
+            'isRenameRedirect': 'true' if redirect else 'false',
+            'isRecursively': 'true' if recursively else 'false',
         }
 
         res = requests.put(req_url, data=payloads, params=params)
